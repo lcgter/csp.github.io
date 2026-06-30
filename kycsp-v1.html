@@ -147,6 +147,24 @@
             background: #ddd;
         }
 
+        /* New styles for copy button */
+        .copy-btn {
+            background-color: #2ecc71;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .info-highlight {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+
         .loading-spinner {
             display: none;
             margin-top: 10px;
@@ -200,6 +218,22 @@
             'Content-Type': 'application/json'
         };
 
+        // Function to copy text to clipboard
+        async function copyToClipboard(text, btnElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "Copied!";
+                btnElement.style.backgroundColor = "#27ae60";
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.backgroundColor = "";
+                }, 2000);
+            } catch (err) {
+                alert("Failed to copy to clipboard.");
+            }
+        }
+
         async function performSearch() {
             const pkgValue = pkgInput.value.trim();
             const skcValue = skcInput.value.trim();
@@ -214,7 +248,6 @@
             searchBtn.disabled = true;
 
             try {
-                // Construct URL: ?pkg_no=eq.VALUE&goods_sn=eq.VALUE
                 const queryParams = `?pkg_no=eq.${encodeURIComponent(pkgValue)}&goods_sn=eq.${encodeURIComponent(skcValue)}`;
                 
                 const response = await fetch(`${API_URL}${queryParams}`, {
@@ -228,11 +261,26 @@
                 
                 if (data && data.length > 0) {
                     // Condition A: Row Found
+                    const transferNo = data[0].origin_code || '';
+                    const skcCode = data[0].goods_sn || '';
+                    const copyText = `${transferNo}\t${skcCode}`;
+
                     showModal(`
                         Result: Checked for incorrect/missing shipment <br>
                         Classification of processing results: Product does not match <br>
                         <b>Reason for verification:</b> Quality control: Product does not match the website (<span style="color: #e74c3c; font-weight: bold;">RC mistake</span>)
+                        <div class="info-highlight">
+                            <strong>Transfer Number:</strong> ${transferNo} <br>
+                            <strong>SKC:</strong> ${skcCode}
+                        </div>
+                        <button id="copyBtn" class="copy-btn">Copy Transfer # & SKC</button>
                     `);
+
+                    // Attach event listener to the newly created copy button
+                    document.getElementById('copyBtn').onclick = function() {
+                        copyToClipboard(copyText, this);
+                    };
+
                 } else {
                     // Condition B: Row NOT Found
                     showModal(`
@@ -271,7 +319,6 @@
             });
         });
 
-        // Close modal when clicking outside the content area
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) closeModal();
         });
