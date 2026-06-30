@@ -248,6 +248,7 @@
             searchBtn.disabled = true;
 
             try {
+                // Construct URL
                 const queryParams = `?pkg_no=eq.${encodeURIComponent(pkgValue)}&goods_sn=eq.${encodeURIComponent(skcValue)}`;
                 
                 const response = await fetch(`${API_URL}${queryParams}`, {
@@ -263,7 +264,10 @@
                     // Condition A: Row Found
                     const transferNo = data[0].origin_code || '';
                     const skcCode = data[0].goods_sn || '';
-                    const copyText = `${transferNo}\t${skcCode}`;
+                    const sendWhNm = data[0].send_wh_nm || '';
+                    
+                    // Format for Excel: Tab-separated values
+                    const copyText = `${transferNo}\t${skcCode}\t${sendWhNm}`;
 
                     showModal(`
                         Result: Checked for incorrect/missing shipment <br>
@@ -271,9 +275,10 @@
                         <b>Reason for verification:</b> Quality control: Product does not match the website (<span style="color: #e74c3c; font-weight: bold;">RC mistake</span>)
                         <div class="info-highlight">
                             <strong>Transfer Number:</strong> ${transferNo} <br>
-                            <strong>SKC:</strong> ${skcCode}
+                            <strong>SKC:</strong> ${skcCode} <br>
+                            <strong>Warehouse:</strong> ${sendWhNm}
                         </div>
-                        <button id="copyBtn" class="copy-btn">Copy Transfer # & SKC</button>
+                        <button id="copyBtn" class="copy-btn">Copy Info</button>
                     `);
 
                     // Attach event listener to the newly created copy button
@@ -319,6 +324,7 @@
             });
         });
 
+        // Close modal when clicking outside the content area
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) closeModal();
         });
